@@ -187,7 +187,7 @@ class ConcatGalCats:
 
             # Now get COSMOS ID. Could get   
             # matching_cosmos_entries == self.cosmos[truth_match['cosmos_index']]
-            cosmos_id.extend(truth_match['cosmos_id'].data)
+            cosmos_id.extend(truth_match['cosmos_index'].data)
             
             # Then get easy bits
             redshifts.extend(z_match['redshift'].data)
@@ -261,8 +261,8 @@ class ConcatGalCats:
             joined_gals_master = self.concat_gal_tabs(all_joined_names)
             select_gals_master = self.concat_gal_tabs(all_select_names)
 
-            ab_mag_joined = sbit.flux_to_abmags(joined_gals_master, bandpass)
-            ab_mag_select = sbit.flux_to_abmags(joined_gals_master, bandpass)
+            ab_mag_joined = sbit.flux_to_abmag(joined_gals_master, bandpass)
+            ab_mag_select = sbit.flux_to_abmag(select_gals_master, bandpass)
 
             joined_gals_master.add_column(ab_mag_joined, name='ab_mag')
             select_gals_master.add_column(ab_mag_select, name='ab_mag')
@@ -318,11 +318,11 @@ def main(args):
                 forecast_cats = ConcatGalCats(basedir=basedir,
                                                   cluster_name=cluster_name,
                                                   forecast_name=forecast_name,
-                                                  bandpass=bandpass
+                                                  bandpass=band
                                                   )
                 
                 #forecast_cats.cosmos = cosmos_cats.choose_cat(bandpass=bandpass)
-                
+                forecast_cats.superbit = sbit
                 forecast_cats.make_a_tab(sbit)
 
     return 0
