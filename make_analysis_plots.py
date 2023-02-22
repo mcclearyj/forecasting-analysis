@@ -139,7 +139,7 @@ class ClusterCats:
             select_gals_band = Table.read(select_gals_name.format(cluster_name=cluster_name, forecast_name=forecast_name))
         
 
-            wg = (joined_gals_band['snr_win'] > min_snr) & (joined_gals_band['redshift'] > min_z)
+            wg = (joined_gals_band['snr_win'] > min_snr) #& (joined_gals_band['redshift'] > min_z)
 
             if band == 'u':
                 bandname = 'uv'
@@ -195,8 +195,6 @@ class ClusterCats:
             self._prep_pd_files(min_snr=min_snr)
             
         else:
-
-            ipdb.set_trace()
             
             selectgals_pd = self._fits_to_panda(joined_gals_master)
             joinedgals_pd = self._fits_to_panda(select_gals_master)
@@ -211,13 +209,14 @@ class ClusterCats:
         return
 
     
-    def save_median_redshifts(self):
+    def save_mean_redshifts(self):
 
         joined = self.joinedgals_pd
         select = self.selectgals_pd
         cluster_name = self.cluster_name
+        path = self.path
 
-        f = open('median_redshifts.csv', 'a', encoding="utf-8")
+        f = open(os.path.join(path, 'mean_redshifts.csv'), 'a', encoding="utf-8")
         
         f.write('# cluster_name, catalog, band, median_z, mean_z, std_z, n_obj\n')
 
@@ -236,7 +235,7 @@ class ClusterCats:
             mean_z = np.mean(joined['redshift'][wg])
             std_z = np.std(joined['redshift'][wg])
             len_z = len(joined['redshift'][wg])
-            state = f'{cluster_name}, joined_gals, {band}, {med_z:.3f}, {med_z:.3f}, {std_z:.3f}, {len_z}\n'
+            state = f'{cluster_name}, joined_gals, {band}, {med_z:.3f}, {mean_z:.3f}, {std_z:.3f}, {len_z}\n'
             f.write(state)
 
         f.close()
@@ -248,15 +247,15 @@ class ClusterCats:
         palette = {}
 
         for band in self.bands:
-            if band == 'u':
+            if (band == 'u'):
                 palette['uv'] = 'magenta'
-            elif (band == 'blue') or (band == 'b'):
+            elif (band in ['b', 'blue']):
                 palette['blue'] = 'C0'
-            elif band == 'g':
+            elif (band == 'g'):
                 palette['g'] ='C2'
-            elif band == 'lum':
+            elif (band == 'lum'):
                 palette['lum'] = 'C1'
-            elif band == 'shape':
+            elif (band == 'shape'):
                 palette['shape'] = 'C3'
             else:
                 raise KeyError(f'No palette color defined for band {band}')
@@ -264,125 +263,203 @@ class ClusterCats:
         return palette
 
     
-    def _make_kdeplot(self, palette):
+    def _make_kdeplot(self, palette, key, zcut, xlabel=None, outname='distplot.png'):
         '''
         Make a kernel density estimator-type density plot. 
         Left panel: all joined galaxies. Right panel: lensing-selection galaxies
         '''
-        
-        z = self.redshift
+
         min_snr = self.min_snr
         joined = self.joinedgals_pd
         select = self.selectgals_pd
+        z = self.redshift
+        
+        if xlabel == None:
+            xlabel=val
+            
+        if zcut == True:
+            joined = joined[(joined['redshift']>float(z))]  # prob. terrible coding practice
+            join_title = f'All galaxies with S/N $>$ {min_snr} \& z $>$ {z}'
+        else:
+            join_title = f'All galaxies with S/N $>${min_snr}'
+      
 
         fig, ax = plt.subplots(1,2, tight_layout=True, figsize=(12,5), sharey=True)
         
-        sns.kdeplot(joined, x="redshift", hue="Filter",
+        sns.kdeplot(joined, x=key, hue="Filter",
                         ax=ax[0], multiple="layer", fill=False,
                         palette=palette, clip=[0,4],
                         lw=2, common_norm=False, bw_adjust=1.5,
                         )
 
-        ax[0].set_xlabel('Redshift', fontsize=16)
-        ax[0].set_title(f'All galaxies with S/N $>${min_snr} \& z $>${z}', fontsize=16)
+        ax[0].set_xlabel(xlabel, fontsize=16)
+        ax[0].set_title(join_title, fontsize=16)
 
         for band in self.bands:                    
             this_band = joined[joined['Filter'] == band]
-            ax[0].axvline(np.median(this_band['redshift']),
+            ax[0].axvline(np.median(this_band[key]),
                               color=palette[band], lw=2, ls='--')
 
-        sns.kdeplot(joined, x="redshift", hue="Filter",
+        sns.kdeplot(joined, x=key, hue="Filter",
                         ax=ax[1], multiple="layer", fill=False,
                         palette=palette, clip=[0,4],
                         lw=2, common_norm=False, bw_adjust=1.5,
                         )
 
-        ax[1].set_xlabel('Redshift', fontsize=16)
+        ax[1].set_xlabel(xlabel, fontsize=16)
         ax[1].set_title('Lensing sample', fontsize=16)
 
         for band in self.bands:
             this_band = select[select['Filter'] == band]
-            ax[1].axvline(np.median(this_band['redshift']),
+            ax[1].axvline(np.median(this_band[key]),
                               color=palette[band], lw=2, ls='--')
 
-        fig.savefig(os.path.join(self.path, f'{self.cluster_name}_z_dists.pdf'))
+        fig.savefig(os.path.join(self.path, outname))
     
         return
     
 
-    def _make_histplot(self, palette):
+    def _make_histplot(self, palette, key, zcut, xlabel=None, outname='histplot.png'):
         '''
         Make a histogram.
         Left panel: all joined galaxies. Right panel: lensing-selection galaxies
         '''
         
-        z = self.redshift
         min_snr = self.min_snr
         joined = self.joinedgals_pd
         select = self.selectgals_pd
+        z = self.redshift
         
+        if xlabel == None:
+            xlabel=val
+            
+        if zcut == True:
+            joined = joined[(joined['redshift']>float(z))]  # prob. terrible coding practice
+            join_title = f'All galaxies with S/N $>$ {min_snr} \& z $>$ {z}'
+        else:
+            join_title = f'All galaxies with S/N $>${min_snr}'
+           
         fig,ax = plt.subplots(1,2, tight_layout=True, figsize=(12,5), sharey=True)
 
 
-        sns.histplot(joined, x='redshift', hue="Filter", element="step", \
+        sns.histplot(joined, x=key, hue="Filter", element="step", \
                          bins=30, stat="probability", common_norm=False, \
                          log_scale=[False, False], binrange=[0,4],
                          fill=True, ax=ax[0], palette=palette, multiple="layer"
                          )
         
-        ax[0].set_xlabel('Redshift', fontsize=16)
-        ax[0].set_title(f'All galaxies with S/N $>${min_snr} \& z $>${z}', fontsize=16)
+        ax[0].set_xlabel(key, fontsize=16)
+        ax[0].set_title(join_title, fontsize=16)
 
         for band in self.bands:                    
             this_band = joined[joined['Filter'] == band]
-            ax[0].axvline(np.median(this_band['redshift']),
+            ax[0].axvline(np.median(this_band[key]),
                               color=palette[band], lw=2, ls='--')
 
-        sns.histplot(select, x='redshift', hue="Filter", element="step", \
+        sns.histplot(select, x=key, hue="Filter", element="step", \
                          bins=30, stat="probability", common_norm=False, \
                          log_scale=[False, False], binrange=[0,4],
                          fill=True, ax=ax[1], palette=palette, multiple="layer"
                          )
  
-        ax[1].set_xlabel('Redshift', fontsize=16)
+        ax[1].set_xlabel(key, fontsize=16)
         ax[1].set_title('Lensing sample', fontsize=16)
 
         for band in self.bands:
             this_band = select[select['Filter'] == band]
-            ax[1].axvline(np.median(this_band['redshift']),
+            ax[1].axvline(np.median(this_band[key]),
                               color=palette[band], lw=2, ls='--')
 
-        fig.savefig(os.path.join(self.path, f'{self.cluster_name}_z_hists.pdf'))
+        fig.savefig(os.path.join(self.path, outname))
  
         return
 
     
-    def make_displot(self, distype="kde"):
+    def make_redshift_plot(self, zcut, distype="kde", key="redshift"):
         '''
         First, define a palette for plots, then make plots
         '''
         
         palette = self._set_palette()
+       
+        xlabel = 'Redshift'
         
         if distype == "kde":
-            self._make_kdeplot(palette=palette)
+            outname = f'{self.cluster_name}_z_dists.pdf'
+            self._make_kdeplot(palette=palette, key=key,
+                                   zcut=zcut, xlabel=xlabel, outname=outname)
                      
         elif distype == "hist":
-            self._make_histplot(palette=palette)
+            outname = f'{self.cluster_name}_z_hists.pdf'
+            self._make_histplot(palette=palette, key=key,
+                                    zcut=zcut, xlabel=xlabel, outname=outname)
             
         else:
             raise AssertionError('type must be either "kde" or "hist"')
         
         return
+    
 
-    def _classic_lum_func(self):
+    def _make_lum_func(self, catalog, palette, zcut, outname='lumfunc.pdf'):
+        '''
+        '''
+
+        cluster_name = self.cluster_name
+        path = self.path
+        
+        if zcut == True:
+            catalog = catalog[(catalog['redshift']>float(self.redshift))]  # prob. terrible coding practice
+        
+        fig, ax = plt.subplots(1, 1, figsize=[7.5, 5.], tight_layout=True)
+        bins = np.linspace(18.5, 28, 100)
+
+        
+        f = open(os.path.join(path, 'photometric_depths.csv'), 'a', encoding="utf-8")
+        f.write('# cluster_name, min_z, band, median_abmag, mean_abmag, argmax_abmag\n')
+
+        for bandpass in np.unique(catalog.Filter):
+
+            color=palette[bandpass]
+            wg = catalog[catalog.Filter == bandpass]
+            ab_mag = wg.ab_mag[~np.isnan(wg.ab_mag)]
+            
+            n_b, bins_b, _= ax.hist(ab_mag, bins=bins, log=False, density=True,
+                                        color=color, histtype='step', label=bandpass, lw=2)
+
+            depth_b = bins_b[n_b.argmax()]
+            print(f'max depth b is {depth_b}')
+            
+            plt.axvline(depth_b, ls='--', color=color)
+
+            # Do the output writing
+            
+            min_z = np.min(wg.redshift)
+            med_ab = np.median(ab_mag)
+            mean_ab = np.mean(ab_mag)
+            
+            state = f'{cluster_name}, {min_z:.3f}, {bandpass}, {med_ab:.3f}, {mean_ab:.3f}, {depth_b:.3f}\n'
+            f.write(state)
+
+        f.close()
+                
+        ax.set_xlabel(f'ABmag (S/N $>$ {self.min_snr})')
+        ax.set_ylabel('Probability Density')
+        ax.legend(fontsize=14, loc='upper left')
+        
+            
+        fig.savefig(os.path.join(self.path, outname))
+ 
+        return
+
+   
+    def _classic_lum_func(self, gals):
         '''
         ##############################################################################
         ########### Calculate depth of an observation -- DO NOT CHANGE ###############
         ##############################################################################
         '''
 
-        '''
+
         # gals is the analysis object catalog
         n,bins=np.histogram(gals['MAG_AUTO'],bins=100)
         midpoints = np.array([(bins[i+1]+bins[i])*0.5 for i in range(len(bins)-1)])
@@ -407,58 +484,46 @@ class ClusterCats:
         complete=midpoints[86]
         complete90=midpoints[90]
         complete50=np.mean([midpoints[97],midpoints[98]])
-        '''
+        
         
         return
 
-
-    def _make_lum_func_plot(self, catalog, outname):
-        '''
-        Make a fun plot
-        '''
-        pass
-        
-        return 
     
-    
-    def make_luminosity_function(self, catalog=None,
-                                     outname='luminosity_function.pdf'):
+    def make_luminosity_function(self, zcut, catalog=None):
         '''
         Make luminosity functions.
         '''
 
-        pass
+        palette = self._set_palette()
 
         if catalog is not None:
 
-            self._make_lum_func_plot(catalog=catalog,
-                                        outname=f'{self.cluster_name}_lumfunc.pdf')
-            
+            self._make_lum_func(catalog, palette=palette, zcut=zcut,
+                                    outname=f'{self.cluster_name}_lumfunc.pdf')
         else:
             
-            self._make_lum_func_plot(catalog=self.joinedgals_pd,
-                                         outname=f'{self.cluster_name}_joined_lumfunc.pdf')
-            self._make_lum_func_plot(catalog=self.selectgals_pd,
-                                         outname=f'{self.cluster_name}_select_lumfunc.pdf')
+            self._make_lum_func(catalog=self.joinedgals_pd, palette=palette, zcut=zcut,
+                                    outname=f'{self.cluster_name}_joined_lumfunc.pdf')
+            self._make_lum_func(catalog=self.selectgals_pd, palette=palette, zcut=zcut,
+                                    outname=f'{self.cluster_name}_select_lumfunc.pdf')
         
-            
         return
 
     
-    def run(self, overwrite=False, distype="kde"):
+    def run(self, zcut=False, overwrite=False, distype="kde"):
 
         # Prep the catalogs
         self.prep_pd_files(overwrite=overwrite)
-
+        
         # Save outputs
-        self.save_median_redshifts()
+        self.save_mean_redshifts()
 
         # Make distribution plots
-        self.make_displot(distype=distype)
+        self.make_redshift_plot(distype=distype, zcut=True)
 
-        # Make luminosity functions
-        self.make_luminosity_function()
-
+        # Make luminosity functions -- only histos
+        self.make_luminosity_function(zcut=zcut)
+        
         return 0
 
     
@@ -467,18 +532,57 @@ def make_latex_table(path):
     Take that little CSV table and turn it into a latex tab :) 
     '''
     
-    median_z = Table.read(os.path.join(path, 'median_redshifts.csv'), format='ascii.csv')
+    depths = Table.read(os.path.join(path, 'photometric_depths.csv'), format='ascii.csv')
+    median_z = Table.read(os.path.join(path, 'mean_redshifts.csv'), format='ascii.csv')    
 
-    # Reformat it
-    median_z.remove_column('n_obj')
+    # Reformat a little
+    median_z.remove_columns(['n_obj', 'std_z'])
+    wb = (median_z['band']=='band')
+    median_z.remove_rows(wb)
+
+    wb = (depths['band']=='band')
+    depths.remove_rows(wb)
 
     # There must be a way to do a regexp find/replace with strings in Python
-    median_z.write(os.path.join(path, 'median_redshifts_latex.tab'),
-                       format='latex')
+    depths.write(os.path.join(path, 'photometric_depths_latex.tab'),
+                     format='latex', overwrite=True)
+    median_z.write(os.path.join(path, 'mean_redshifts_latex.tab'),
+                       format='latex', overwrite=True)
 
     # This is cheap but it will do the trick
     head = '# cluster name & catalog & band & median $z$ & mean $z$ & $sigma_z$//'
-    cmd = f"sed -i.bak -e 's/_/\\_/g' median_redshifts.csv"
+    express1 = 's/annular_gals/lensing/g'
+    express2 = 's/joined_gals/all/g'
+    express3 = 's/_/\\_/g'
+    
+    cmd = f"sed -i.bak -e '{express1}' -e '{express2}' -e '{express3}' \
+    {path}/mean_redshifts_latex.tab {path}/photometric_depths_latex.tab"
+    
+    os.system(cmd)
+
+    # Special bonus for the photometric depths
+    express1 = 's/ 0.005 / all /g'
+    express2 = 's/ {0\.3,0\.059,0\.45} / lensing /g'
+    cmd = f"sed -i.bak -e '{express1}' -e '{express2}' {path}/photometric_depths_latex.tab"
+    os.system(cmd)
+
+    tex_tab = Table.copy(median_z)
+    tex_tab.add_column(depths['argmax_abmag'], name='Depth (ABmag)')
+
+    sel =  tex_tab['catalog']=='annular_gals'; tex_tab['catalog'][sel]='Lensing'
+    joi =  tex_tab['catalog']=='joined_gals';  tex_tab['catalog'][joi]='All'
+
+    cluster_names = np.zeros(len(median_z),dtype='<U30')
+    for unique in np.unique(median_z['# cluster_name']):
+        here = median_z['# cluster_name'] == unique
+        cluster_names[here] = r'\texttt{%s}' % unique
+    namecol = Table.Column(cluster_names, name='Cluster Name')
+    tex_tab.replace_column('# cluster_name', namecol)
+    tex_tab['# cluster_name'].name = 'Cluster Name'
+    
+    tex_tab.write(f'combined_results_latex.tab', format='latex', overwrite=True)
+
+    cmd = 'sed -i -e "s/_/\\_/g" combined_results_latex.tab'
     os.system(cmd)
 
     
@@ -494,15 +598,15 @@ def main(args):
     if bands == None:
         bands = ['blue', 'lum', 'shape']
     if redshifts == None:
-        redshifts = ['0.059', '0.3', '0.45']
+        redshifts = ['0.059']#, '0.3', '0.45']
     if masses == None:  
         masses = ['m4.1e14']
 
     #if overwrite == True:
         
     try:
-        os.remove(os.path.join(path, 'median_redshifts.csv'))
-        
+        os.remove(os.path.join(path, 'mean_redshifts.*'))
+        os.remove(os.path.join(path, 'photometric_depths.*'))
     except FileNotFoundError:
         pass 
     
@@ -529,8 +633,9 @@ def main(args):
 if __name__ == '__main__':
 
     args = parse_args()
+    
     rc = main(args)
-
+        
     if rc == 0:
         print('make_analysis_plots.py has completed succesfully')
     else:
