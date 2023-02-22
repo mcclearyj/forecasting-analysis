@@ -555,7 +555,7 @@ class ClusterCats:
         if catalog is not None:
 
             self._make_lum_func(catalog, palette=palette, zcut=zcut,
-                                    outname=f'{self.cluster_name}_lumfunc.pdf')
+                                    outname=f'{self.cluster_name}_indiv_lumfunc.pdf')
         else:
             
             self._make_lum_func(catalog=self.joinedgals_pd, palette=palette, zcut=zcut,
@@ -565,6 +565,105 @@ class ClusterCats:
         
         return
 
+    def make_indiv_zhists(self):
+
+        fig,ax = plt.subplots(1,3, tight_layout=True, figsize=(15,5), sharey=True)
+
+        palette = self._set_palette()
+        min_snr = self.min_snr
+        joined = self.joinedgals_pd
+        select = self.selectgals_pd
+        z = self.redshift
+        
+        joined = joined[(joined['redshift']>float(z))]  # prob. terrible coding practice
+        
+        all_gals_b = joined[joined.Filter == 'blue']
+        all_gals_lum = joined[joined.Filter == 'lum']
+        all_gals_shape = joined[joined.Filter == 'shape']
+        
+        shear_gals_b = select[select.Filter == 'blue']
+        shear_gals_lum = select[select.Filter == 'lum']
+        shear_gals_shape = select[select.Filter == 'shape']
+       
+        ###
+        ### Blue 
+        ###
+        sns.histplot(all_gals_b['redshift'], element="step", bins=30, \
+                     stat="probability", common_norm=True, log_scale=[False, False], \
+                     binrange=[0,4], fill=True, ax=ax[0], color="C0", \
+                     multiple="layer", label=f'$z>{z}$')
+
+        ax[0].axvline(np.median(all_gals_b['redshift']), color='C0', \
+                      label=f"median = {np.median(all_gals_b['redshift']):1.2f}")
+
+        sns.histplot(shear_gals_b['redshift'], element="step", bins=30, \
+                     stat="probability", common_norm=True, log_scale=[False, False], \
+                     binrange=[0,4], fill=True, ax=ax[0], color="C0", alpha=0.5, \
+                     multiple="layer", label='Lensing sample')
+
+        ax[0].axvline(np.median(shear_gals_b['redshift']), color='k', \
+                      label=f"median = {np.median(shear_gals_b['redshift']):1.2f}")
+
+        ax[0].legend(fontsize=14)
+        ax[0].set_xlabel('Redshift', fontsize=16)
+        ax[0].set_ylabel('Probability', fontsize=16)
+        ax[0].set_title('Blue filter', fontsize=16)
+
+
+        ###
+        ### Lum
+        ###
+
+        sns.histplot(all_gals_lum['redshift'], element="step", bins=30, \
+                     stat="probability", common_norm=True, log_scale=[False, False], \
+                     binrange=[0,4], fill=True, ax=ax[1], color="C1", \
+                     multiple="layer", label=f'$z>{z}$')
+
+        ax[1].axvline(np.median(all_gals_lum['redshift']), color='C1', \
+                      label=f"median = {np.median(all_gals_lum['redshift']):1.2f}")
+
+        sns.histplot(shear_gals_lum['redshift'], element="step", bins=30, \
+                     stat="probability", common_norm=True, log_scale=[False, False], \
+                     binrange=[0,4], fill=True, ax=ax[1], color="C1", alpha=0.5, \
+                     multiple="layer", label='Lensing sample')
+
+        ax[1].axvline(np.median(shear_gals_lum['redshift']), color='k', \
+                      label=f"median = {np.median(shear_gals_lum['redshift']):1.2f}")
+
+        ax[1].legend(fontsize=14)
+        ax[1].set_xlabel('Redshift', fontsize=16)
+        ax[1].set_ylabel('Probability', fontsize=16)
+        ax[1].set_title('Lum filter', fontsize=16)
+
+        ###
+        ### Shape
+        ###
+
+        sns.histplot(all_gals_shape['redshift'], element="step", bins=30, \
+                     stat="probability", common_norm=True, log_scale=[False, False], \
+                     binrange=[0,4], fill=True, ax=ax[2], color="C3", \
+                     multiple="layer", label=f'$z>{z}$')
+
+        ax[2].axvline(np.median(all_gals_shape['redshift']), color='C3', \
+                      label=f"median = {np.median(all_gals_shape['redshift']):1.2f}")
+
+        sns.histplot(shear_gals_shape['redshift'], element="step", bins=30, \
+                     stat="probability", common_norm=True, log_scale=[False, False], \
+                     binrange=[0,4], fill=True, ax=ax[2], color="C3", alpha=0.5, \
+                     multiple="layer", label='Lensing sample')
+
+        ax[2].axvline(np.median(shear_gals_shape['redshift']), color='k', \
+                      label=f"median = {np.median(shear_gals_shape['redshift']):1.2f}")
+
+        ax[2].legend(fontsize=14)
+        ax[2].set_xlabel('Redshift', fontsize=16)
+        ax[2].set_ylabel('Probability', fontsize=16)
+        ax[2].set_title('Shape filter', fontsize=16)
+
+        outname = f'{self.cluster_name}_indiv_zhists.pdf'
+        fig.savefig(os.path.join(path, outname))
+        
+        return
     
     def run(self, zcut, overwrite=False, distype="kde"):
 
@@ -594,6 +693,9 @@ class ClusterCats:
         # Make distribution plots
         self.make_single_redshift_plot()
 
+        # Make z-hist plots by band
+        self.make_indiv_zhists()
+        
         # Make luminosity functions -- only histos
         self.make_luminosity_function(catalog=self.joinedgals_pd, zcut=False)
         
@@ -672,7 +774,6 @@ def main(args):
         bands = ['blue', 'lum', 'shape']
     if redshifts == None:
         redshifts = ['0.059', '0.3', '0.45']
-        #redshifts = ['0.45']
     if masses == None:  
         masses = ['m4.1e14']
 
@@ -706,7 +807,7 @@ def main(args):
 
     # Then also do it once with no z cut at to show fg distribution
     
-    single = cluster.run_all_gal_zs()
+    cluster.run_all_gal_zs()
     
     # For convenience!
     
