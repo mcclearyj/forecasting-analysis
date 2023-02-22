@@ -1,0 +1,52 @@
+#YAML File for make_plots.py
+
+# Plot Export Location and PDF Names
+base_dir: /work/mccleary_group/superbit/forecasting-analysis-2023/vassilakis.g
+pdf_name_j: 'joined_match_plot.pdf'
+pdf_name_a: 'annular_match_plot.pdf'
+
+# Plot Labels
+joined_xlabel: 'Number of 5 minute SuperBIT exposures'
+joined_ylabel: 'Number of galaxies per arcmin$^2$ at z = 0.3'
+joined_title: 'Joined Match'
+
+annular_xlabel: 'Number of 5 minute SuperBIT exposures'
+annular_ylabel: 'Number of galaxies per arcmin$^2$ at z = 0.3'
+annular_title: 'Annular Match'
+
+# First CSV
+plot_csv1: True
+csvpath1: /work/mccleary_group/superbit/mock-data-forecasting/forecast_lum/cl_m7.8e14_z0.3/forecast_lum_averages.csv
+label1: 'lum'
+color1: 'gold'
+
+# Second CSV
+plot_csv2: True
+csvpath2: /scratch/vassilakis.g/mock-data-forecasting/forecast_newshape/cl_m7.8e14_z0.3/forecast_newshape_averages.csv
+label2: 'shape'
+color2: 'tab:orange'
+
+# Third CSV
+plot_csv3: True
+csvpath3: /scratch/vassilakis.g/mock-data-forecasting/forecast_u/cl_m7.8e14_z0.3/forecast_u_averages.csv
+label3: 'u'
+color3: 'tab:pink'
+
+# Fourth CSV
+plot_csv4: True
+csvpath4: /work/mccleary_group/superbit/mock-data-forecasting/forecast_blue/cl_m7.8e14_z0.3/forecast_blue_averages.csv
+label4: 'b'
+color4: 'tab:blue'
+
+# Fifth CSV
+plot_csv5: False
+csvpath5: /work/mccleary_group/superbit/mock-data-forecasting/forecast_shape/cl_m4.1e14_z0.3/forecast_shape_averages.csv
+label5: 'new shape'
+color5: 'tab:red'
+
+# Sixth CSV
+plot_csv6: False
+csvpath6:
+label6: 
+color6:
+
