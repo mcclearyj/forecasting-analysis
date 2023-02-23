@@ -42,6 +42,8 @@ def parse_args():
                         help='Set to overwrite files')
     parser.add_argument('--source_select', action='store_true', default=False,
                         help='Set to select sources during MEDS creation')
+    parser.add_argument('-min_snr', action='store', type=float, default=5,
+                            help='Set an SNR_WIN threshold for sextractor catalog')
     parser.add_argument('--vb', action='store_true', default=False,
                         help='Verbosity')
     parser.add_argument('--exposures_per_list', type=int, default=3,  
@@ -92,7 +94,8 @@ def main(args):
 
     # Create an instance of the MiniMatcher object, loading joined & annular cats 
     mini_matcher = MiniMatcher(basedir=mock_dir, run_name=run_name)
-
+    mini_matcher.min_snr = min_snr
+    
     #4. Calls the mini_mocks.py file with arguments
     for exposure_list in exposure_lists:
         exposures_per_list = len(exposure_list)
