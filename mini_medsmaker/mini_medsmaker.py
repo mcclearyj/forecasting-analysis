@@ -62,6 +62,7 @@ def main(args):
     use_coadd = args.meds_coadd
     overwrite = args.overwrite
     source_selection = args.source_select
+    min_snr = args.min_snr
     vb = args.vb
     exposures_per_list = args.exposures_per_list
 
