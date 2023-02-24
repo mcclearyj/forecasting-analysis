@@ -62,6 +62,7 @@ def main(args):
     use_coadd = args.meds_coadd
     overwrite = args.overwrite
     source_selection = args.source_select
+    min_snr = args.min_snr
     vb = args.vb
     exposures_per_list = args.exposures_per_list
 
@@ -127,15 +128,32 @@ def main(args):
     mini_matcher.save_num_matches(outname=matched_obj_name)
 
     #Calculating mini_codd stats
+    # Define the parent directory containing the r0 to r29 directories
     run_name = args.run_name
     parent_dir = os.path.dirname(mock_dir)
-    
-    calculate_statistics(run_name, parent_dir)
 
-    outcsv = os.path.join(mock_dir, run_name + '_averages.csv')
-    rename_headers(outcsv)        
+    # Create a list of directory names to search in
+    dir_names = [f'r{i}' for i in range(30)]
+
+    # Loop through the directories and check for the existence of the matching files
+    all_files_exist = True
+    for dir_name in dir_names:
+        csv_file_name = f'{dir_name}_mini_coadd_matches.csv'
+        csv_file_path = os.path.join(parent_dir, dir_name, csv_file_name)
+        if not os.path.exists(csv_file_path):
+            all_files_exist = False
+            break
+
+    # If all files exist, run the commands
+    if all_files_exist:
+    
+        calculate_statistics(run_name, parent_dir)
+
+        outcsv = os.path.join(parent_dir, run_name + '_averages.csv')
+        rename_headers(outcsv)
 
     return
+
 
 def calculate_statistics(run_name, parent_dir):
     # Initialize an empty dataframe to store the values from each run
