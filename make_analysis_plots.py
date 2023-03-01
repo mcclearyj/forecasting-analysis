@@ -53,12 +53,10 @@ def set_rc_params():
     plt.rcParams.update({'ytick.labelsize': 16})
     plt.rcParams.update({'xtick.major.size': 8})
     plt.rcParams.update({'xtick.major.width': 1.3})
-    plt.rcParams.update({'xtick.major.visible': True})
     plt.rcParams.update({'xtick.minor.visible': True})
     plt.rcParams.update({'xtick.minor.width': 1.})
     plt.rcParams.update({'xtick.minor.size': 6})
     plt.rcParams.update({'xtick.direction': 'out'})
-    plt.rcParams.update({'xtick.major.visible': True})
     plt.rcParams.update({'ytick.major.width': 1.3})
     plt.rcParams.update({'ytick.major.size': 8})
     plt.rcParams.update({'ytick.minor.visible': True})
@@ -133,14 +131,13 @@ class ClusterCats:
         for band in self.bands:
             
             forecast_name = f'{self.basename}_{band}'
-            
+        
             joined_gals_name = os.path.join(path, '{cluster_name}_{forecast_name}_gals_joined_master_cat.fits')
             select_gals_name = os.path.join(path, '{cluster_name}_{forecast_name}_annular_gals_master_cat.fits')
-
+            
             joined_gals_band = Table.read(joined_gals_name.format(cluster_name=cluster_name, forecast_name=forecast_name))
             select_gals_band = Table.read(select_gals_name.format(cluster_name=cluster_name, forecast_name=forecast_name))
         
-
             wg = (joined_gals_band['snr_win'] > min_snr) #& (joined_gals_band['redshift'] > min_z)
 
             if band == 'u':
@@ -255,8 +252,8 @@ class ClusterCats:
         palette = {}
 
         for band in self.bands:
-            if (band == 'u'):
-                palette['uv'] = 'magenta'
+            if (band in ['u', 'uv']):
+                palette['uv'] = 'C6'
             elif (band in ['b', 'blue']):
                 palette['blue'] = 'C0'
             elif (band == 'g'):
@@ -415,7 +412,7 @@ class ClusterCats:
 
         palette = self._set_palette()
        
-        join_title = f'All galaxies with S/N $>${min_snr}'
+        join_title = f'All galaxies with S/N $>$ {min_snr}'
         xlabel='Redshift'
 
         fig, ax = plt.subplots(1,1, tight_layout=True, figsize=(7, 5))
@@ -482,7 +479,7 @@ class ClusterCats:
                                         color=color, histtype='step', label=bandpass, lw=2)
 
             depth_b = bins_b[n_b.argmax()]
-            print(f'max depth b is {depth_b}; SN = {np.median(sn[wg_sn10])} median depth = {sn10_abmag}')
+            print(f'max depth {bandpass} is {depth_b}; SN = {np.median(sn[wg_sn10])} median depth = {sn10_abmag}')
             
             plt.axvline(sn10_abmag, ls='--', color=color)
 
@@ -507,43 +504,91 @@ class ClusterCats:
  
         return
 
-   
-    def _classic_lum_func(self, gals):
+
+    def _make_lum_func2(self, palette, zcut, outname='lumfunc.pdf'):
         '''
-        ##############################################################################
-        ########### Calculate depth of an observation -- DO NOT CHANGE ###############
-        ##############################################################################
         '''
 
-
-        # gals is the analysis object catalog
-        n,bins=np.histogram(gals['MAG_AUTO'],bins=100)
-        midpoints = np.array([(bins[i+1]+bins[i])*0.5 for i in range(len(bins)-1)])
-
-        wg=(midpoints<26.4) & (midpoints>19)
-
-        fit=np.polyfit(midpoints[wg],np.log(n[wg]),1)
-        num = fit[0]*midpoints+fit[1]
-
-        plt.hist(gals['MAG_AUTO'],histtype='step',bins=100,label='mock deep 3hr b',log=True)
-        plt.plot(midpoints,np.exp(num),'--k')
-
-        # OK, now to estimate 50% completeness
-        fraction=np.log(n)/num
-        enum=enumerate(fraction)
-        l = list(enum)
-
-        # Here you have to pick your point in the resulting l array.
-        # In one instance, I used ind=80 for ~100% completeness,
-        # used ind=93 for 90% completeness, and np.mean(93,94) for 50% completeness
-
-        complete=midpoints[86]
-        complete90=midpoints[90]
-        complete50=np.mean([midpoints[97],midpoints[98]])
+        cluster_name = self.cluster_name
+        path = self.path
+        joined = self.joinedgals_pd
+        select = self.selectgals_pd
         
+        if zcut == True:
+            print(f'Filtering on redshifts {self.redshift}')
+            join_title = f'All galaxies with S/N $>$ {self.min_snr} \& z $>$ {self.redshift}'
+
+            len1 = len(joined)
+            
+            joined = joined[(joined['redshift']>float(self.redshift))]  # prob. terrible coding practice
+            
+            len2 = len(joined)
+            print(f'Filtered out {len1} - {len2} objects')
+            
+        else:
+            join_title =  f'All galaxies with S/N $>$ {self.min_snr}'
+            
+        fig,axes = plt.subplots(1,2, tight_layout=True, figsize=(12,5), sharey=True)
+        bins = np.linspace(18.5, 29, 110)
+
+        f = open(os.path.join(path, 'photometric_depths.csv'), 'a', encoding="utf-8")
+        f.write('# cluster_name, min_z, band, median_abmag, sn10_abmag, argmax_abmag\n')
         
+        for i, catalog in enumerate([joined, select]):
+            
+            sn = catalog['flux_auto']/catalog['fluxerr_auto']
+            sn_bins = np.linspace(0, 500, 1000)
+            sn_ind = np.digitize(sn, sn_bins)
+        
+            for bandpass in np.unique(catalog.Filter):
+
+                color=palette[bandpass]
+                bandcat = catalog[catalog.Filter == bandpass]
+            
+                sn = bandcat['flux_auto']/bandcat['fluxerr_auto'] 
+                wg_sn10 = (sn > 9.8) & (sn < 10.2)
+            
+                ab_mag = bandcat.ab_mag[~np.isnan(bandcat.ab_mag)]
+
+                sn10_abmag = np.median(ab_mag[wg_sn10])
+            
+                n_b, bins_b, _= axes[i].hist(ab_mag, bins=bins, log=False, density=True,
+                                                 color=color, histtype='step', label=bandpass, lw=2)
+
+                depth_b = bins_b[n_b.argmax()]
+                print(f'max depth {bandpass} is {depth_b}; SN = {np.median(sn[wg_sn10])} median depth = {sn10_abmag}')
+            
+                axes[i].axvline(sn10_abmag, ls='--', color=color)
+
+                axes[i].set_xlabel(f'ABmag (S/N $>$ {self.min_snr})')
+                axes[i].legend(fontsize=14, loc='upper left')
+
+                axes[0].set_ylabel('Probability Density')
+
+                # Do the output writing
+            
+                min_z = np.min(bandcat.redshift)
+                med_ab = np.median(ab_mag)
+                mean_ab = np.mean(ab_mag)
+            
+                state = f'{cluster_name}, {min_z:.2f}, {bandpass}, {med_ab:.2f}, {sn10_abmag:.2f}, {depth_b:.2f}\n'
+                f.write(state)
+                
+            axes[i].set_xlim([19, 30])
+             
+            if (i==0):
+                axes[i].set_title(join_title)
+            else:
+                axes[i].set_title('Lensing sample', fontsize=16)
+
+        f.close()
+                
+        
+            
+        fig.savefig(os.path.join(self.path, outname))
+ 
         return
-
+    
     
     def make_luminosity_function(self, zcut, catalog=None):
         '''
@@ -557,12 +602,9 @@ class ClusterCats:
             self._make_lum_func(catalog, palette=palette, zcut=zcut,
                                     outname=f'{self.cluster_name}_indiv_lumfunc.pdf')
         else:
-            
-            self._make_lum_func(catalog=self.joinedgals_pd, palette=palette, zcut=zcut,
-                                    outname=f'{self.cluster_name}_joined_lumfunc.pdf')
-            self._make_lum_func(catalog=self.selectgals_pd, palette=palette, zcut=zcut,
-                                    outname=f'{self.cluster_name}_select_lumfunc.pdf')
-        
+
+            self._make_lum_func2(palette=palette, zcut=zcut,
+                                    outname=f'{self.cluster_name}_lumfuncs.pdf')
         return
 
     def make_indiv_zhists(self):
@@ -661,7 +703,7 @@ class ClusterCats:
         ax[2].set_title('Shape filter', fontsize=16)
 
         outname = f'{self.cluster_name}_indiv_zhists.pdf'
-        fig.savefig(os.path.join(path, outname))
+        fig.savefig(os.path.join(self.path, outname))
         
         return
     
@@ -771,9 +813,9 @@ def main(args):
     overwrite = args.overwrite
 
     if bands == None:
-        bands = ['blue', 'lum', 'shape']
+        bands = ['uv', 'lum', 'shape']
     if redshifts == None:
-        redshifts = ['0.059', '0.3', '0.45']
+        redshifts = ['0.45']
     if masses == None:  
         masses = ['m4.1e14']
 
