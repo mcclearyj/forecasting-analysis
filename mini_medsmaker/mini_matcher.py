@@ -25,6 +25,7 @@ class MiniMatcher():
         self.annular_cat = None
         self.num_matches = None
         self.vb = True
+        self.min_snr = None
 
         self._load_catalogs()
         self._create_nmatch_dict()
@@ -119,20 +120,29 @@ class MiniMatcher():
         return cat1[cat1_ind], cat2[cat2_ind]
 
 
-    def load_sex_cat(self, sexcat_name, n_exp):
+    def load_sex_cat(self, sexcat_name, n_exp, min_snr=None):
         '''
         Probably superfluous, but gotta make sure it exists then load it
         '''
         assert type(sexcat_name) is str, 'required argument sexcat_name must be a string'
         assert type(n_exp) in [int, float], 'required argument: need to supply a number of exposures'
-
+        
+        if min_snr == None:
+            min_snr = self.min_snr
+            print(f'Using min_snr = {min_snr} for SExtractor cat')
+                      
         if os.path.exists(sexcat_name) == True:
             sexcat_path = sexcat_name
         else:
             sexcat_path = os.path.join(self.basedir, sexcat_name)
-            
+
         try:
            sex_cat = Table.read(sexcat_path)
+
+           if min_snr is not None:
+               wg = sex_cat['SNR_WIN'] > min_snr
+               sex_cat = sex_cat[wg]
+           
            self.sex_cat = sex_cat
            self.sexcat_path = sexcat_path
            self.num_matches['len_sexcat'].append(len(sex_cat))
