@@ -288,9 +288,11 @@ def main(args):
     # CCV: cosmosdir = /users/jmcclear/data/superbit/superbit-metacal/GalSim/data
     # Disco: cosmosdir = /work/mccleary_group/superbit/mock-data-forecasting/mock_catalogs/ 
     
-    bands = ['b', 'lum', 'shape']
-    bandnames = ['blue', 'lum', 'shape']
-    redshifts = ['0.059', '0.3', '0.45']
+    bands = ['u', 'b', 'lum', 'shape']
+    #bandnames = ['blue', 'lum', 'shape']
+    bandnames = ['u', 'blue', 'lum', 'shape']
+    #redshifts = ['0.059', '0.3', '0.45']
+    redshifts = ['0.059']
     masses = ['m4.1e14']
 
     # Create SuperBIT instance to do flux_auto to ABmag conversion

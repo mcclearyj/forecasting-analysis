@@ -1,5 +1,8 @@
 import pandas as pd
 import matplotlib
+from matplotlib import rc,rcParams
+rc('font',**{'family':'serif'})
+rc('text', usetex=True)
 matplotlib.use('PDF')  # change the backend to PDF
 import matplotlib.pyplot as plt
 import argparse
@@ -23,23 +26,23 @@ def set_rc_params():
     This should be a config one day
     '''
     plt.rcParams.update({'figure.facecolor':'w'})
-    plt.rcParams.update({'axes.linewidth': 1.3})
-    plt.rcParams.update({'xtick.labelsize': 16})
-    plt.rcParams.update({'ytick.labelsize': 16})
+    plt.rcParams.update({'axes.linewidth': 1.0})
+    plt.rcParams.update({'xtick.labelsize': 14})
+    plt.rcParams.update({'ytick.labelsize': 14})
     plt.rcParams.update({'xtick.major.size': 8})
-    plt.rcParams.update({'xtick.major.width': 1.3})
+    plt.rcParams.update({'xtick.major.width': 1.0})
     plt.rcParams.update({'xtick.minor.visible': True})
     plt.rcParams.update({'xtick.minor.width': 1.})
     plt.rcParams.update({'xtick.minor.size': 6})
     plt.rcParams.update({'xtick.direction': 'out'})
-    plt.rcParams.update({'ytick.major.width': 1.3})
+    plt.rcParams.update({'ytick.major.width': 1.0})
     plt.rcParams.update({'ytick.major.size': 8})
     plt.rcParams.update({'ytick.minor.visible': True})
     plt.rcParams.update({'ytick.minor.width': 1.})
     plt.rcParams.update({'ytick.minor.size':6})
     plt.rcParams.update({'ytick.direction':'out'})
     plt.rcParams.update({'font.family': 'serif'})
-
+    plt.rcParams.update({'font.size': '14'})
     return
 
 
@@ -49,7 +52,7 @@ def main(args):
     set_rc_params()
     
    # Create the joined plot and axis objects
-    fig1, ax_joined = plt.subplots(figsize=(8,4))
+    fig1, ax_joined = plt.subplots(figsize=(8,4), tight_layout=True)
 
     # Call the plot_joined_data function for each CSV file to plot
     for i in range(1, 7):
@@ -108,15 +111,15 @@ def plot_joined_data(fig1, ax_joined, file_path, label, color, joined_xlabel, jo
     # Set the x and y axis labels and title
     ax_joined.set_xlabel(joined_xlabel)
     ax_joined.set_ylabel(joined_ylabel)
-    ax_joined.set_title(joined_title)
-    ax_joined.tick_params(axis='both', which='major', labelsize=12)
+    ax_joined.set_title(joined_title, fontsize=14)
+    #ax_joined.tick_params(axis='both', which='major', labelsize=12)
 
     # Set the x-axis limits to 0 and 36, with ticks every 3 units
     ax_joined.set_xlim(0, 37)
     ax_joined.set_xticks(range(0, 37, 3))
 
     # Add a legend to the plot
-    ax_joined.legend()
+    ax_joined.legend(fontsize=12)
 
     return fig1, ax_joined
 
@@ -139,15 +142,15 @@ def plot_annular_data(fig2, ax_annular, file_path, label, color, annular_xlabel,
     # Set the x and y axis labels and title
     ax_annular.set_xlabel(annular_xlabel)
     ax_annular.set_ylabel(annular_ylabel)
-    ax_annular.set_title(annular_title)
-    ax_annular.tick_params(axis='both', which='major', labelsize=12)
+    ax_annular.set_title(annular_title, fontsize=14)
+    ax_annular.tick_params(axis='both', which='major')
 
     # Set the x-axis limits to 0 and 36, with ticks every 3 units
     ax_annular.set_xlim(0, 37)
     ax_annular.set_xticks(range(0, 37, 3))
 
     # Add a legend to the plot
-    ax_annular.legend()
+    ax_annular.legend(fontsize=12)
 
     return fig2, ax_annular
 
