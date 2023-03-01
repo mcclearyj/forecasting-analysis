@@ -67,9 +67,9 @@ def print_bashfile(run_name, cluster_name, mock_dir_names, start_r, end_r):
 
     for mock_dir_name in mock_dir_names:
         job_string = \
-        f'python /work/mccleary_group/vassilakis.g/superbit-metacal/superbit_lensing/medsmaker/scripts/prep_dirs.py \
+        f'python /work/mccleary_group/vassilakis.g/forecasting-analysis/mini_medsmaker/prep_dirs.py \
     --mock_dir {mock_dir_name}\n' \
-        f'python /work/mccleary_group/vassilakis.g/superbit-metacal/superbit_lensing/medsmaker/scripts/mini_medsmaker.py \
+        f'python /work/mccleary_group/vassilakis.g/forecasting-analysis/mini_medsmaker/mini_medsmaker.py \
     --mock_dir {mock_dir_name} \
     -fname_base {run_name} -run_name {run_name}'
         print(job_string, file=output, flush=True)
@@ -100,7 +100,7 @@ def main(args):
        base_dir = os.getcwd()
 
     if n_reals == None:
-        n_reals = 1
+        n_reals = 5
 
     run_dir = os.path.join(base_dir, run_name)
     run_js_dir = os.path.join(js_dir, run_name)
