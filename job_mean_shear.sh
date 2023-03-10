@@ -7,8 +7,8 @@
 #SBATCH -J meanshear
 #SBATCH -v 
 # Use '%A' for array-job ID, '%J' for job ID and '%a' for task ID
-#SBATCH -o slurm-outputs/%J-%a.out
-#SBATCH -e slurm-outputs/%J-%a.err
+#SBATCH -o meanshear-%J.out
+#SBATCH -e meanshear-%J.err
 
 source /work/mccleary_group/miniconda3/etc/profile.d/conda.sh
 conda activate sbmcal_139
@@ -39,3 +39,5 @@ do
     python $SBMCAL/superbit_lensing/analysis/run_analysis.py $BASEDIR/$RUN_NAME -shear_cut=0.06 --vb --overwrite
 
 done
+
+mv meanshear-*.err meanshear-*.out $BASEDIR

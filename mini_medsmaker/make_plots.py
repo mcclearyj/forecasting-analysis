@@ -113,6 +113,7 @@ def plot_joined_data(fig1, ax_joined, file_path, label, color, joined_xlabel, jo
     ax_joined.set_ylabel(joined_ylabel)
     ax_joined.set_title(joined_title, fontsize=14)
     #ax_joined.tick_params(axis='both', which='major', labelsize=12)
+    ax_joined.grid(True)
 
     # Set the x-axis limits to 0 and 36, with ticks every 3 units
     ax_joined.set_xlim(0, 37)
@@ -144,7 +145,7 @@ def plot_annular_data(fig2, ax_annular, file_path, label, color, annular_xlabel,
     ax_annular.set_ylabel(annular_ylabel)
     ax_annular.set_title(annular_title, fontsize=14)
     ax_annular.tick_params(axis='both', which='major')
-
+    ax_joined.grid(True)
     # Set the x-axis limits to 0 and 36, with ticks every 3 units
     ax_annular.set_xlim(0, 37)
     ax_annular.set_xticks(range(0, 37, 3))
