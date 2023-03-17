@@ -13,7 +13,7 @@ def parse_args():
 
     parser.add_argument('basedir', default=None,
                             help = 'Path to simulations')
-    parser.add_argument('cosmosdir', default=None,
+    parser.add_argument('-cosmosdir', default=None,
                             help = 'Path to COSMOS catalogs')
     
     return parser.parse_args()
@@ -288,8 +288,9 @@ def main(args):
     # CCV: cosmosdir = /users/jmcclear/data/superbit/superbit-metacal/GalSim/data
     # Disco: cosmosdir = /work/mccleary_group/superbit/mock-data-forecasting/mock_catalogs/ 
     
-    bands = ['b', 'lum', 'shape']
-    bandnames = ['blue', 'lum', 'shape']
+    bands = ['u', 'b', 'lum', 'shape']
+    #bandnames = ['blue', 'lum', 'shape']
+    bandnames = ['u', 'blue', 'lum', 'shape']
     redshifts = ['0.059', '0.3', '0.45']
     masses = ['m4.1e14']
 

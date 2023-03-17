@@ -27,24 +27,24 @@ def print_bashfile(run_name, cluster_name, mock_dir_names, start_r, end_r):
     output = io.StringIO()
 
     print('#!/bin/sh', file=output)
-    print('#SBATCH -t 23:59:59', file=output)
+    print('#SBATCH -t 59:59', file=output)
     print('#SBATCH -N 1', file=output)
     print('#SBATCH -n 16', file=output)
     print('#SBATCH --mem-per-cpu=6g', file=output)
-    print('#SBATCH --partition=short', file=output)
-    print(f'#SBATCH -J {cluster_name}_{run_name}_r{start_r}r{end_r}', file=output)
+    print('#SBATCH --partition=express', file=output)
+    print(f'#SBATCH -J {cluster_name}_minimocks_r{start_r}r{end_r}', file=output)
     print('#SBATCH -v', file=output)
     print('#SBATCH --mail-type=ALL', file=output)
-    print('#SBATCH --mail-user=vassilakis.g@northeastern.edu', file=output)
+    print('#SBATCH --mail-user=jmac.ftw@gmail.com', file=output)
     print(f'#SBATCH -o minimocks_{run_name}_{cluster_name}_r{start_r}r{end_r}.out', file=output)
     print(f'#SBATCH -e minimocks_{run_name}_{cluster_name}_r{start_r}r{end_r}.err', file=output)
 
     print('', file=output)
     print('', file=output)
 
-    print('source /work/mccleary_group/vassilakis.g/miniconda3/bin/activate', file=output)
+    print('source /work/mccleary_group/miniconda3/bin/activate', file=output)
     print('', file=output)
-    print('conda activate sbclone2', file=output)
+    print('conda activate sbmcal_139', file=output)
 
     print('echo $PATH', file=output)
     print('echo $PYTHONPATH', file=output)
@@ -67,9 +67,9 @@ def print_bashfile(run_name, cluster_name, mock_dir_names, start_r, end_r):
 
     for mock_dir_name in mock_dir_names:
         job_string = \
-        f'python /work/mccleary_group/vassilakis.g/forecasting-analysis/mini_medsmaker/prep_dirs.py \
+        f'python /work/mccleary_group/forecasting-analysis/mini_medsmaker/prep_dirs.py \
     --mock_dir {mock_dir_name}\n' \
-        f'python /work/mccleary_group/vassilakis.g/forecasting-analysis/mini_medsmaker/mini_medsmaker.py \
+        f'python /work/mccleary_group/forecasting-analysis/mini_medsmaker/mini_medsmaker.py \
     --mock_dir {mock_dir_name} \
     -fname_base {run_name} -run_name {run_name}'
         print(job_string, file=output, flush=True)
