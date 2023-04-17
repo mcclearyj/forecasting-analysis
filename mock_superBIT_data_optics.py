@@ -400,17 +400,30 @@ def make_a_star(ud, pud, k, wcs, affine, psf, sbparams, logprint, obj_index=None
     # Default to blue stars, which are plenty bright
 
     index = obj_index - 1
-
+    # Now that all star fluxes have been implemented, all bitfluxes can be used.
     if sbparams.star_cat is not None:
-        if sbparams.bandpass in ['crates_lum', 'crates_shape']:
-            star_flux = sbparams.star_cat['bitflux_electrons_lum'][index]
+        if sbparams.bandpass == 'crates_lum':
+        star_flux = sbparams.star_cat['bitflux_electrons_lum'][index]
 
-        elif sbparams.bandpass in ['crates_b', 'crates_u']:
-            star_flux = sbparams.star_cat['bitflux_electrons_b'][index]
+        elif sbparams.bandpass == 'crates_nir':
+        star_flux = sbparams.star_cat['bitflux_electrons_nir'][index]
+
+        elif sbparams.bandpass == 'crates_r':
+        star_flux = sbparams.star_cat['bitflux_electrons_r'][index]
+
+        elif sbparams.bandpass == 'crates_u':
+        star_flux = sbparams.star_cat['bitflux_electrons_u'][index]
+
+        elif sbparams.bandpass == 'crates_g':
+        star_flux = sbparams.star_cat['bitflux_electrons_g'][index]
+
+        elif sbparams.bandpass == 'crates_b':
+        star_flux = sbparams.star_cat['bitflux_electrons_b'][index]
 
         else:
-            raise NotImplementedError('Star catalog sampling only implemented ' +\
-                                      'for crates_shape and crates_b!')
+            raise NotImplementedError('Star catalog sampling only implemented ' +
+                            'for crates_shape, crates_b, crates_g, crates_u, crates_r, and crates_nir!')
+
 
         star_flux *= sbparams.exp_time / sbparams.gain
 
