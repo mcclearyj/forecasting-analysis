@@ -42,15 +42,16 @@ def main(args):
     exp_list = list(np.arange(3, 37, 3))
     exp_list.extend([1,2,4,5])
 
-    for n_exp in exp_list
-        minimocks_dir = f'nexp_{n_exp}'
+    for n_exp in exp_list:
+        
+        minimocks_dir = f'mini_coadds/nexp_{n_exp}'
         outdir = os.path.join(mock_dir, minimocks_dir)
         sexcat_file = os.path.join(outdir, f'{run_name}_mock_coadd_cat.ldac')
 
-        mini_matcher.load_sex_cat(real_outfile, n_exp)
+        mini_matcher.load_sex_cat(sexcat_file, n_exp)
 
-    # Now, do the matching against joined and annular catalogs. Be chatty, print to screen
-    mini_matcher.match_to_analysis_cats()
+        # Now, do the matching against joined and annular catalogs
+        mini_matcher.match_to_analysis_cats()
 
 
 if __name__ == '__main__':
