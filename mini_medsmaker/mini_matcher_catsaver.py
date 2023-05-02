@@ -177,15 +177,16 @@ class MiniMatcher():
 
         # Also save the joined catalog
         mini_joined_cat_name = sexcat_path.replace('mock_coadd_cat', 'gals_joined_match')
-        matched_joined_cat.write(mini_joined_cat_name)
+        matched_joined_cat.write(mini_joined_cat_name, format='fits', overwrite=True)
         print(f'Saved mini joined cat to {mini_joined_cat_name}')
+
         # Now match annular
         matched_sex_cat1, matched_annular_cat = self.match_coords(annular_cat, sex_cat)
         self.num_matches['annular_match'].append(len(matched_annular_cat))
 
         # Also save the annular catalog
         mini_annular_cat_name = sexcat_path.replace('mock_coadd_cat', 'annular_match')
-        matched_annular_cat.write(mini_joined_cat_name)
+        matched_annular_cat.write(mini_annular_cat_name, format='fits', overwrite=True)
         print(f'Saved mini annular cat to {mini_annular_cat_name}')
 
         return
