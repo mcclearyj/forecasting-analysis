@@ -183,6 +183,9 @@ class ConcatGalCats:
             
             # First, (re-)match to truth in RA/Dec
             this_truth = self.truth_tables[i]
+            wg  = this_truth['redshift'] > 0
+            this_truth = this_truth[wg]
+
             truth_match, z_match = self.match_coords(this_truth, z)
 
             # Now get COSMOS ID. Could get   
@@ -190,7 +193,7 @@ class ConcatGalCats:
             cosmos_id.extend(truth_match['cosmos_index'].data)
             
             # Then get easy bits
-            redshifts.extend(z_match['redshift'].data)
+            redshifts.extend(truth_match['redshift'].data)
             ra.extend(z_match['ra'].data)
             dec.extend(z_match['dec'].data)
             sid.extend(z_match['id'].data)
@@ -234,10 +237,15 @@ class ConcatGalCats:
         bandpass = self.bandpass
         basedir = self.basedir
 
+        if forecast_name == 'forecast_blue':
+            out_name = 'forecast_b'
+        else:
+            out_name = forecast_name
+
         # Name the outputs something reasonable
     
-        joined_gals_name = f'{cluster_name}_{forecast_name}_gals_joined_master_cat.fits'
-        select_gals_name = f'{cluster_name}_{forecast_name}_annular_gals_master_cat.fits'
+        joined_gals_name = f'{cluster_name}_{out_name}_gals_joined_master_cat.fits'
+        select_gals_name = f'{cluster_name}_{out_name}_annular_gals_master_cat.fits'
 
         # Find all matching catalogs
     
@@ -276,7 +284,7 @@ class ConcatGalCats:
         else:
             
             print(f'No joined galaxy catalogs found for {cluster_name} in {forecast_name}')
-
+            ipdb.set_trace()
         return
 
     
@@ -288,9 +296,12 @@ def main(args):
     # CCV: cosmosdir = /users/jmcclear/data/superbit/superbit-metacal/GalSim/data
     # Disco: cosmosdir = /work/mccleary_group/superbit/mock-data-forecasting/mock_catalogs/ 
     
-    bands = ['u', 'b', 'lum', 'shape']
-    #bandnames = ['blue', 'lum', 'shape']
-    bandnames = ['u', 'blue', 'lum', 'shape']
+    #bands = ['u', 'b']
+    #bandnames =  ['u', 'blue']
+
+    bands =  ['lum', 'shape']
+    bandnames = ['lum', 'shape']
+
     redshifts = ['0.059', '0.3', '0.45']
     masses = ['m4.1e14']
 

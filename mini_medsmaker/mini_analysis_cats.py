@@ -4,14 +4,14 @@ import subprocess
 import json
 import ipdb
 import pandas as pd
-from mini_matcher import MiniMatcher
 from mini_matcher_catsaver import MiniMatcher
+import numpy as np
 
 def parse_args():
 
     parser = ArgumentParser()
 
-    parser.add_argument('--mock_dir', type=str,
+    parser.add_argument('-mock_dir', type=str,
                         help='Directory containing mock data')
     parser.add_argument('--outfile', type=str,
                         help='Name of output MEDS file')
@@ -21,7 +21,8 @@ def parse_args():
                         help='Name of mock simulation run')
     parser.add_argument('--overwrite', action='store_true', default=False,
                         help='Set to overwrite files')
-
+    parser.add_argument('-min_snr', action='store', type=float, default=5.0, 
+                        help='Minimum SNR for SExtractor catalog matching')
     return parser.parse_args()
 
 # note that exposure_lists is a list of lists, or basically a list of "exposure_list"
@@ -32,8 +33,7 @@ def main(args):
     outdir = args.outdir
     run_name = args.run_name
     min_snr = args.min_snr
-    vb = args.vb
-
+    vb = True
     # This also loads the joined and annular catalogs -- note basedir is assumed
     # to be a realization-level thing where annular and joined catalogs live
     # run_name should be forecast_blue or forecast_uv
@@ -48,7 +48,7 @@ def main(args):
         outdir = os.path.join(mock_dir, minimocks_dir)
         sexcat_file = os.path.join(outdir, f'{run_name}_mock_coadd_cat.ldac')
 
-        mini_matcher.load_sex_cat(sexcat_file, n_exp)
+        mini_matcher.load_sex_cat(sexcat_file, int(n_exp))
 
         # Now, do the matching against joined and annular catalogs
         mini_matcher.match_to_analysis_cats()

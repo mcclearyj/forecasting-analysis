@@ -100,8 +100,8 @@ def plot_joined_data(fig1, ax_joined, file_path, label, color, joined_xlabel, jo
 
     # Extract the relevant columns
     n_exp = data['n_exp']
-    mean_joined_density = data['mean_joined_match']/337
-    std_joined_density = data['std_joined_match']/337
+    mean_joined_density = data['mean_joined_match']/350
+    std_joined_density = data['std_joined_match']/350
     
 
     # Plot mean_joined_match vs n_exp with line connecting points and error bars
@@ -133,8 +133,8 @@ def plot_annular_data(fig2, ax_annular, file_path, label, color, annular_xlabel,
 
     # Extract the relevant columns
     n_exp = data['n_exp']
-    mean_annular_density = data['mean_annular_match']/337
-    std_annular_density = data['std_annular_match']/337
+    mean_annular_density = data['mean_annular_match']/350
+    std_annular_density = data['std_annular_match']/350
     
     # Plot mean_annular_match vs n_exp with line connecting points and error bars
     ax_annular.errorbar(n_exp, mean_annular_density, yerr=std_annular_density, fmt='o', capsize=4, markersize=5, color=color, label=label)
