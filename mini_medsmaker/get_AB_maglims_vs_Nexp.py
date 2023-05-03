@@ -7,16 +7,16 @@ import pandas as pd
 import glob
 from astropy.table import Table, vstack
 from superbit_class import SuperBIT
-import scipy
+from scipy import stats
 import numpy as np
 
 def parse_args():
 
     parser = ArgumentParser()
 
-    parser.add_argument('--mock_dir', type=str,
+    parser.add_argument('-mock_dir', type=str,
                         help='Directory containing mock data')
-    parser.add_argument('--outfile', type=str,
+    parser.add_argument('-outfile', type=str,
                         help='Name of output MEDS file')
     parser.add_argument('-outdir', type=str, default=None,
                         help='Output directory for MEDS file')
@@ -34,8 +34,6 @@ def main(args):
     outfile = args.outfile
     outdir = args.outdir
     run_name = args.run_name
-    min_snr = args.min_snr
-    vb = args.vb
 
     # This also loads the joined and annular catalogs -- note basedir is assumed
     # to be a realization-level thing where annular and joined catalogs live
@@ -66,7 +64,7 @@ def main(args):
         for joined in joined_files:
             table = Table.read(joined)
             table.remove_column('VIGNET')
-            concatenated_tab = vstack([concatenated_table, table])
+            concatenated_tab = vstack([concatenated_tab, table])
 
         # Now convert flux to AB mag
         sbit = SuperBIT()
@@ -85,22 +83,23 @@ def main(args):
         ## Get some summary statistics
         ##
 
-        ab_mag = concatenated_tab.ab_mag[~np.isnan(concatenated_tab.ab_mag)]
+        concatenated_tab = concatenated_tab[~np.isnan(concatenated_tab['ab_mag'])]
 
-        sn = ab_mag['FLUX_AUTO']/ab_mag['FLUXERR_AUTO']
+        ab_mag = concatenated_tab['ab_mag']
+
+        sn = concatenated_tab['FLUX_AUTO']/concatenated_tab['FLUXERR_AUTO']
 
         wg_sn10 = (sn > 9.8) & (sn < 10.2)
 
         sn10_abmag = np.median(ab_mag[wg_sn10])
-        std_sn10_abmag = np.std(sn10_abmag)
 
         med_ab = np.median(ab_mag)
         mean_ab = np.mean(ab_mag)
         std_ab = np.std(ab_mag)
 
-        depth_b = (scipy.stats.mode(ab_mag)).mode[0]
+        depth_b = (stats.mode(ab_mag)).mode[0]
 
-        state = f'{run_name}, {n_exp}, {med_ab:.2f}, {mean_ab:.1f}, {std_ab:.1f}, {sn10_abmag:.1f}, {std_sn10_abmag:.1f}, {depth_b:.1f}\n'
+        state = f'{run_name}, {n_exp}, {med_ab:.2f}, {mean_ab:.2f}, {std_ab:.2f}, {sn10_abmag:.2f}, {depth_b:.2f}\n'
         print(state)
         f.write(state)
 
