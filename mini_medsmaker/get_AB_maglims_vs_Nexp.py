@@ -16,6 +16,8 @@ def parse_args():
 
     parser.add_argument('-mock_dir', type=str,
                         help='Directory containing mock data')
+    parser.add_argument('-band_name', type=str,
+                        help='Filter [u, g, b, lum, shape]')
     parser.add_argument('-outfile', type=str,
                         help='Name of output MEDS file')
     parser.add_argument('-outdir', type=str, default=None,
@@ -34,6 +36,7 @@ def main(args):
     outfile = args.outfile
     outdir = args.outdir
     run_name = args.run_name
+    band_name = args.band_name
 
     # This also loads the joined and annular catalogs -- note basedir is assumed
     # to be a realization-level thing where annular and joined catalogs live
@@ -41,10 +44,10 @@ def main(args):
 
     exp_list = list(np.arange(3, 37, 3))
     exp_list.extend([1,2,4,5])
-
+    exp_list.sort()
 
     f = open(os.path.join(mock_dir, f'minimocks_{run_name}_depths.csv'), 'a', encoding="utf-8")
-    f.write('# run_name, n_exp, median_abmag, mean_abmag, std_abmag, sn10_abmag, std_sn10_abmag, argmax_abmag\n')
+    f.write('# run_name, n_exp, n_obj, median_abmag, mean_abmag, std_abmag, sn10_abmag, argmax_abmag\n')
 
 
     for n_exp in exp_list:
@@ -68,7 +71,7 @@ def main(args):
 
         # Now convert flux to AB mag
         sbit = SuperBIT()
-        ab_mags = sbit.flux_to_abmag(concatenated_tab, 'u', colname='FLUX_AUTO')
+        ab_mags = sbit.flux_to_abmag(concatenated_tab, band_name, colname='FLUX_AUTO')
         concatenated_tab.add_column(ab_mags, name='ab_mag')
 
         # Write out the concatenated table to a new file
@@ -84,6 +87,7 @@ def main(args):
         ##
 
         concatenated_tab = concatenated_tab[~np.isnan(concatenated_tab['ab_mag'])]
+        len_tab = len(concatenated_tab)
 
         ab_mag = concatenated_tab['ab_mag']
 
@@ -99,7 +103,7 @@ def main(args):
 
         depth_b = (stats.mode(ab_mag)).mode[0]
 
-        state = f'{run_name}, {n_exp}, {med_ab:.2f}, {mean_ab:.2f}, {std_ab:.2f}, {sn10_abmag:.2f}, {depth_b:.2f}\n'
+        state = f'{run_name}, {n_exp}, {len_tab}, {med_ab:.2f}, {mean_ab:.2f}, {std_ab:.2f}, {sn10_abmag:.2f}, {depth_b:.2f}\n'
         print(state)
         f.write(state)
 
